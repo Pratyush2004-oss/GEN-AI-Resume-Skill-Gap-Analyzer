@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import AuthRoutes from "./routes/auth.route.js";
+import InterviewRoutes from "./routes/interview.route.js";
 import cors from "cors";
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(
 
 // Mount auth routes.
 app.use("/api/auth", AuthRoutes);
+app.use('/api/interview', InterviewRoutes);
 
 
 // error handler

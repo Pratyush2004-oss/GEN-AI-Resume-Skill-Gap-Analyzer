@@ -83,7 +83,7 @@ const InterviewReportSchema = new mongoose.Schema({
     selfDescription: {
         type: String,
     },
-    overallScore: {
+    matchScore: {
         type: Number,
         min: 0,
         max: 100,
@@ -93,6 +93,11 @@ const InterviewReportSchema = new mongoose.Schema({
     behavioralQuestions: [BehavioralQuestionSchema],
     skillGaps: [SkillGapSchema],
     preparationPlan: [PreparationPlanSchema],
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    }
 }, {
     timestamps: true
 })
