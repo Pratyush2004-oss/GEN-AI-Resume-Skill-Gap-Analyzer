@@ -9,13 +9,31 @@
   transition: all 0.3s ease-in-out;
 
   &.primary-btn {
-    background-color: #508740;
+    background: linear-gradient(135deg, #6aa84f 0%, #508740 100%);
     color: whitesmoke;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 16px rgba(80, 135, 64, 0.35);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+      box-shadow: 0 10px 26px rgba(80, 135, 64, 0.5);
+    }
   }
 
-  &:active {
-    transform: scale(1.1);
-    color: whitesmoke;
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7ed957;
+    outline-offset: 2px;
   }
 
   .loader-container {
@@ -43,7 +61,7 @@
 
 .password-btn {
   position: absolute;
-  top: 50%;
+  top: 70%;
   right: 1rem;
   background-color: transparent;
   border: 0;

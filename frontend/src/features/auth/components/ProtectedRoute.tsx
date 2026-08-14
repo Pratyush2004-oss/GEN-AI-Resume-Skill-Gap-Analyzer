@@ -1,15 +1,16 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
+import Loading from '../../../components/shared/Loading';
 import { useAuth } from '../hook/useAuth';
 
 const ProtectedRoute = () => {
     const location = useLocation();
     const [user, , isLoading] = useAuth();
 
-    // optimistic flow: 
+    // optimistic flow:
     // if cached user exists, allow access immediately
     // if cached user does not exist, wait for the query to load
     if (!user && isLoading) {
-        return <div>Loading...</div>
+        return <Loading />
     }
 
     if (!user && !isLoading) {

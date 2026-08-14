@@ -1,0 +1,104 @@
+.interview {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  padding: 2.5rem 2rem;
+
+  // Ambient animated background glows (matches the rest of the app)
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    animation: interview-orb 18s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  &::before {
+    width: 36rem;
+    height: 36rem;
+    top: -14rem;
+    right: -10rem;
+    background: radial-gradient(circle, rgba(80, 135, 64, 0.22), transparent 70%);
+  }
+
+  &::after {
+    width: 38rem;
+    height: 38rem;
+    bottom: -18rem;
+    left: -12rem;
+    background: radial-gradient(circle, rgba(58, 110, 165, 0.2), transparent 70%);
+    animation-delay: -9s;
+  }
+
+  .interview-inner {
+    position: relative;
+    z-index: 1;
+    width: min(1400px, 100%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 1fr) 19rem;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .interview-content {
+    min-width: 0;
+  }
+}
+
+@keyframes interview-orb {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-2.5rem, 2.5rem) scale(1.1);
+  }
+}
+
+// ------------------------------------------------------------------
+// Responsive
+// ------------------------------------------------------------------
+@media (max-width: 1200px) {
+  .interview {
+    padding: 2rem 1.5rem;
+
+    .interview-inner {
+      grid-template-columns: 15rem minmax(0, 1fr);
+    }
+
+    .interview-sidebar,
+    .sg {
+      position: static;
+    }
+
+    // Move skill gaps below the content on medium screens
+    .sg {
+      grid-column: 2;
+      animation: none;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .interview {
+    padding: 1.75rem 1.25rem;
+
+    .interview-inner {
+      grid-template-columns: 1fr;
+    }
+
+    .sg {
+      grid-column: 1;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .interview {
+    padding: 1.5rem 1rem;
+  }
+}
