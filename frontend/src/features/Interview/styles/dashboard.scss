@@ -1,0 +1,190 @@
+// ----------------------------------------------------------------------------
+// Dashboard
+// ----------------------------------------------------------------------------
+// Greeting hero + the InterviewReportList. Mirrors the home page's dark glassy
+// design language: ambient animated glows, green accent, blur panels.
+
+.dashboard {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  padding: 3rem 2rem 5rem;
+  position: relative;
+  overflow: hidden;
+
+  // Ambient animated background glows (same as the home page).
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    animation: dashboard-orb 16s ease-in-out infinite;
+  }
+
+  &::before {
+    width: 30rem;
+    height: 30rem;
+    top: -12rem;
+    right: -10rem;
+    background: radial-gradient(circle, rgba(80, 135, 64, 0.24), transparent 70%);
+  }
+
+  &::after {
+    width: 32rem;
+    height: 32rem;
+    bottom: -14rem;
+    left: -10rem;
+    background: radial-gradient(circle, rgba(52, 116, 190, 0.2), transparent 70%);
+    animation-delay: -8s;
+  }
+
+  .dashboard-inner {
+    position: relative;
+    z-index: 1;
+    width: min(1100px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  // ------------------------------------------------------------------
+  // Hero header
+  // ------------------------------------------------------------------
+  .dashboard-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.9rem;
+    padding: 2.5rem 1.5rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(26, 31, 39, 0.5);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    animation: dashboard-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+    &__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.4rem 1.1rem;
+      border-radius: 2rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: #a3f07f;
+      background: rgba(80, 135, 64, 0.12);
+      border: 1px solid rgba(80, 135, 64, 0.35);
+
+      svg {
+        flex-shrink: 0;
+      }
+    }
+
+    &__title {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      color: whitesmoke;
+
+      span {
+        color: #7ed957;
+      }
+    }
+
+    &__subtitle {
+      max-width: 32rem;
+      color: rgba(245, 245, 245, 0.6);
+      line-height: 1.7;
+      font-size: 0.98rem;
+    }
+
+    &__cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      margin-top: 0.5rem;
+      padding: 0.8rem 1.8rem;
+      border: none;
+      border-radius: 2rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: whitesmoke;
+      background: linear-gradient(135deg, #6aa84f 0%, #508740 100%);
+      box-shadow: 0 4px 14px rgba(80, 135, 64, 0.35);
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+
+      svg {
+        flex-shrink: 0;
+      }
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(80, 135, 64, 0.5);
+        filter: brightness(1.1);
+      }
+
+      &:active {
+        transform: scale(0.97);
+      }
+
+      &:focus-visible {
+        outline: 2px solid #7ed957;
+        outline-offset: 2px;
+      }
+    }
+  }
+}
+
+@keyframes dashboard-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dashboard-orb {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-2rem, 2rem) scale(1.1);
+  }
+}
+
+// ------------------------------------------------------------------
+// Responsive
+// ------------------------------------------------------------------
+@media (max-width: 640px) {
+  .dashboard {
+    padding: 2rem 1rem 3.5rem;
+
+    .dashboard-hero {
+      padding: 2rem 1.25rem;
+
+      &__title {
+        font-size: clamp(1.4rem, 6vw, 1.9rem);
+      }
+
+      &__subtitle {
+        font-size: 0.9rem;
+      }
+    }
+  }
+}

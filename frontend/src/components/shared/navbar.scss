@@ -56,48 +56,6 @@
     gap: 0.75rem;
   }
 
-  .nav-btn {
-    border: none;
-    padding: 0.55rem 1.4rem;
-    border-radius: 2rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &--ghost {
-      background: transparent;
-      color: whitesmoke;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-
-      &:hover {
-        border-color: #7ed957;
-        color: #7ed957;
-      }
-    }
-
-    &--primary {
-      background: linear-gradient(135deg, #6aa84f 0%, #508740 100%);
-      color: whitesmoke;
-      box-shadow: 0 4px 14px rgba(80, 135, 64, 0.35);
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 22px rgba(80, 135, 64, 0.5);
-        filter: brightness(1.1);
-      }
-
-      &:active {
-        transform: scale(0.97);
-      }
-    }
-
-    &:focus-visible {
-      outline: 2px solid #7ed957;
-      outline-offset: 2px;
-    }
-  }
-
   .user-menu {
     position: relative;
   }

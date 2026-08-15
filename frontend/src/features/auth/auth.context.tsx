@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { createContext, useCallback, useMemo, type SetStateAction } from "react";
-import { checkMe, refreshToken, setAccesstoken } from "./services/auth.api";
+import { checkMe, refreshToken } from "./services/auth.api";
+import { setAccessToken } from "../../services/api";
 import type { UserType } from "./types/auth.types";
 
 export const AuthContext = createContext<
@@ -19,8 +20,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Step 1: use the refresh cookie to get a fresh access token.
       const refreshed = await refreshToken();
 
-      // Step 2: store the access token in axios so protected requests can use it.
-      setAccesstoken(refreshed.accessToken);
+      // Step 2: store the access token on the shared axios instance so
+      // protected requests (auth, interview, ...) can use it.
+      setAccessToken(refreshed.accessToken);
 
       // Step 3: now that axios has the access token, fetch the logged-in user.
       const currentUser = await checkMe();

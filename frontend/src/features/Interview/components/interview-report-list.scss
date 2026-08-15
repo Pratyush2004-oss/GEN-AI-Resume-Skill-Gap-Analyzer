@@ -1,0 +1,372 @@
+// ----------------------------------------------------------------------------
+// InterviewReportList
+// ----------------------------------------------------------------------------
+// Report cards that follow the app's dark glassy design language: panels on
+// #111111 with a green accent (#7ed957 / #508740), blur + border glow, hover
+// lift and staggered entrance animations (see the home page for the originals).
+
+.report-list {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  // ------------------------------------------------------------------
+  // Header (title + report count pill)
+  // ------------------------------------------------------------------
+  &__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    animation: report-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  &__title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    color: whitesmoke;
+  }
+
+  &__count {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: rgba(245, 245, 245, 0.45);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+    white-space: nowrap;
+  }
+
+  // ------------------------------------------------------------------
+  // Card grid
+  // ------------------------------------------------------------------
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.1rem;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Single report card
+// ----------------------------------------------------------------------------
+.report-card {
+  display: flex;
+  align-items: stretch;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(26, 31, 39, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+
+  // Staggered entrance: each card animates in a bit later than the previous one.
+  animation: report-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--card-index, 0) * 70ms);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(80, 135, 64, 0.4);
+    box-shadow:
+      0 20px 44px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(80, 135, 64, 0.15);
+  }
+
+  // Armed delete state: red glow so the user sees what a confirm will do.
+  &--confirming {
+    border-color: rgba(248, 113, 113, 0.5);
+    box-shadow:
+      0 0 0 1px rgba(248, 113, 113, 0.2),
+      0 16px 40px rgba(0, 0, 0, 0.45);
+
+    &:hover {
+      border-color: rgba(248, 113, 113, 0.7);
+    }
+  }
+
+  // Delete in flight: fade out and block interaction.
+  &--deleting {
+    opacity: 0.55;
+    pointer-events: none;
+    transform: scale(0.98);
+  }
+
+  // Main clickable area — opens the report
+  &__open {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+    padding: 1.1rem 1.15rem;
+    border: none;
+    background: none;
+    color: whitesmoke;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+
+    &:hover {
+      background: rgba(80, 135, 64, 0.07);
+
+      .report-card__icon {
+        transform: scale(1.06);
+        box-shadow: 0 0 16px rgba(80, 135, 64, 0.35);
+      }
+
+      .report-card__chevron {
+        transform: translateX(3px);
+        color: #7ed957;
+      }
+    }
+
+    &:active {
+      background: rgba(80, 135, 64, 0.12);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #7ed957;
+      outline-offset: -2px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
+    color: #7ed957;
+    background: rgba(80, 135, 64, 0.12);
+    border: 1px solid rgba(80, 135, 64, 0.3);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: whitesmoke;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: rgba(245, 245, 245, 0.5);
+
+    svg {
+      color: rgba(80, 135, 64, 0.8);
+      flex-shrink: 0;
+    }
+  }
+
+  &__chevron {
+    flex-shrink: 0;
+    color: rgba(245, 245, 245, 0.35);
+    transition: transform 0.25s ease, color 0.25s ease;
+  }
+
+  // Delete button (two-step confirm)
+  &__delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 3rem;
+    padding: 0 0.9rem;
+    border: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
+    color: rgba(245, 245, 245, 0.5);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: background-color 0.25s ease, color 0.25s ease;
+
+    &:hover:not(:disabled) {
+      background: rgba(248, 113, 113, 0.1);
+      color: #f87171;
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #f87171;
+      outline-offset: -2px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+  }
+
+  &__spinner {
+    animation: spin 0.8s linear infinite;
+  }
+
+  // ------------------------------------------------------------------
+  // Skeleton card (shown while the list is loading)
+  // ------------------------------------------------------------------
+  &--skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1.4rem 1.2rem;
+    pointer-events: none;
+    animation: report-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--card-index, 0) * 70ms);
+  }
+}
+
+.skeleton {
+  display: block;
+  border-radius: 0.5rem;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+
+  &--icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0.75rem;
+  }
+
+  &--line {
+    width: 100%;
+    height: 0.85rem;
+  }
+
+  &--short {
+    width: 55%;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Empty state
+// ----------------------------------------------------------------------------
+.report-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.6rem;
+  padding: 3.5rem 1.5rem;
+  border-radius: 1.1rem;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(26, 31, 39, 0.4);
+  animation: report-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.4rem;
+    height: 3.4rem;
+    border-radius: 1rem;
+    color: rgba(245, 245, 245, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  &__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: whitesmoke;
+  }
+
+  &__text {
+    max-width: 24rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: rgba(245, 245, 245, 0.5);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Animations
+// ----------------------------------------------------------------------------
+@keyframes report-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Responsive
+// ----------------------------------------------------------------------------
+@media (max-width: 640px) {
+  .report-list {
+    padding: 1.5rem 1rem;
+
+    &__grid {
+      grid-template-columns: 1fr;
+    }
+
+    &__header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}

@@ -1,5 +1,4 @@
 import { useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
-import { toast } from 'react-toastify';
 import {
     AlertCircle,
     Braces,
@@ -16,10 +15,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../auth/hook/useAuth';
 import '../styles/home.scss';
+import { useGenerateInterviewReportMutation } from '../mutations';
+import { useNavigate } from 'react-router';
+import { toast } from 'react-toastify';
 
 const MAX_JOB_DESC_CHARS = 5000;
 const MAX_SELF_DESC_CHARS = 2000;
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_EXTENSIONS = /\.(pdf|doc|docx|txt)$/i;
 
 type FormErrors = {
@@ -35,6 +37,7 @@ const formatFileSize = (bytes: number): string => {
 
 const Home = () => {
     const [user] = useAuth();
+    const navigate = useNavigate();
 
     const [jobDescription, setJobDescription] = useState('');
     const [selfDescription, setSelfDescription] = useState('');
@@ -44,6 +47,8 @@ const Home = () => {
     const [errors, setErrors] = useState<FormErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // access the generated interview report mutation
+    const generateReportMutation = useGenerateInterviewReportMutation();
     const firstName = user?.username?.trim().split(/\s+/)[0] ?? 'there';
 
     const handleFile = (file: File | undefined) => {
@@ -86,22 +91,35 @@ const Home = () => {
         const nextErrors: FormErrors = {};
         if (!jobDescription.trim()) {
             nextErrors.jobDescription = 'Paste the job description to get started.';
+            setErrors(nextErrors);
+            return;
         }
         if (!resume) {
             nextErrors.resume = 'Attach your resume so the questions can be tailored to you.';
+            setErrors(nextErrors);
+            return;
         }
-        setErrors(nextErrors);
-        if (Object.keys(nextErrors).length > 0) return;
 
         setIsSubmitting(true);
         // TODO: Replace with the real interview-creation mutation once the API is wired up.
-        setTimeout(() => {
-            setIsSubmitting(false);
-            toast.success('Your mock interview is ready — questions are on the way!');
-            setJobDescription('');
-            setSelfDescription('');
-            setResume(null);
-        }, 1600);
+        generateReportMutation.mutate({
+            jobDescription,
+            resume,
+            selfDescription
+        }, {
+            onSuccess: (data) => {
+                toast.success(data.message);
+                navigate(`interview/${data.interviewReport._id}`);
+                // reset the input fields 
+                setJobDescription('');
+                setResume(null);
+                setSelfDescription('');
+            },
+            onSettled: () => {
+                setIsSubmitting(false);
+            }
+        })
+
     };
 
     return (
@@ -215,9 +233,8 @@ const Home = () => {
                                 ) : (
                                     <label
                                         htmlFor="resume"
-                                        className={`dropzone${dragActive ? ' dropzone--active' : ''}${
-                                            errors.resume ? ' dropzone--error' : ''
-                                        }`}
+                                        className={`dropzone${dragActive ? ' dropzone--active' : ''}${errors.resume ? ' dropzone--error' : ''
+                                            }`}
                                         onDragOver={(e) => {
                                             e.preventDefault();
                                             setDragActive(true);

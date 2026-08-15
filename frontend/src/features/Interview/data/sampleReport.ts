@@ -4,6 +4,7 @@ import type { REPORTTYPE } from "../types";
 // report-fetching API is not wired up yet.
 export const sampleReport: REPORTTYPE = {
     _id: "interview_001",
+    title: "Senior Frontend Engineer",
     jobDescription:
         "Senior Frontend Engineer — Acme Inc.\n\n" +
         "We are looking for a Senior Frontend Engineer to own the user-facing web experience across our product. " +

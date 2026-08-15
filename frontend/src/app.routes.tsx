@@ -3,6 +3,7 @@ import Login from "./features/auth/pages/Login";
 import Signup from "./features/auth/pages/Signup";
 import NotFoundPage from "./features/not-found";
 import Home from "./features/Interview/Pages/Home";
+import Dashboard from "./features/Interview/Pages/Dashboard";
 import ProtectedRoute from "./features/auth/components/ProtectedRoute";
 import Navbar from "./components/shared/Navbar";
 import Interview from "./features/Interview/Pages/Interview";
@@ -25,6 +26,10 @@ export const router = createBrowserRouter([
                     {
                         index: true,
                         element: <Home />
+                    },
+                    {
+                        path: "/dashboard",
+                        element: <Dashboard />
                     },
                     {
                         path: "/interview/:interviewId",

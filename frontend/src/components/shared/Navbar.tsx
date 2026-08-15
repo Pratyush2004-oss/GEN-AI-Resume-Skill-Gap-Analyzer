@@ -66,6 +66,13 @@ const Navbar = () => {
                                 </div>
                                 <div className="dropdown-divider" />
                                 <button
+                                    className="dropdown-item dropdown-item--dashboard"
+                                    onClick={() => navigate('/dashboard')}
+                                >
+                                    Dashboard
+                                </button>
+                                <div className="dropdown-divider" />
+                                <button
                                     className="dropdown-item dropdown-item--logout"
                                     role="menuitem"
                                     onClick={handleLogout}

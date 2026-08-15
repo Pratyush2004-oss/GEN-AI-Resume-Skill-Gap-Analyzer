@@ -1,21 +1,15 @@
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import type { AuthResponseType, CheckMeResponseType, LogoutResponseType, RefreshResponseType } from "../types/auth.types";
+import api from "../../../services/api";
 
-const api = axios.create({
-    baseURL: import.meta.env.PROD ? "/api/auth" : "http://localhost:3000/api/auth",
-    withCredentials: true
-})
-
-// keep the access token in the axios header after login/refresh
-export const setAccesstoken = (accessToken: string | null) => {
-    if (accessToken) api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`
-    else delete api.defaults.headers.common["Authorization"]
-}
+// NOTE: The access token header is managed centrally in src/services/api.ts
+// via setAccessToken(). Never create a separate axios instance here - if you
+// do, the token set at login time won't be attached to these requests.
 
 export async function register(username: string, email: string, password: string): Promise<AuthResponseType | null> {
     try {
-        const response = await api.post("/signup", { username, email, password });
+        const response = await api.post("/auth/signup", { username, email, password });
         if (response.status === 400) throw new Error(response.data);
         return response.data;
     } catch (error: any) {
@@ -28,7 +22,7 @@ export async function register(username: string, email: string, password: string
 // login 
 export async function login(email: string, password: string): Promise<AuthResponseType | null> {
     try {
-        const response = await api.post("/login", { email, password });
+        const response = await api.post("/auth/login", { email, password });
         if (response.status === 400) throw new Error(response.data);
         return response.data;
     } catch (error: any) {
@@ -44,7 +38,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
 
 export async function logout(): Promise<LogoutResponseType | null> {
     try {
-        const response = await api.get("/logout");
+        const response = await api.get("/auth/logout");
         if (response.status === 400) throw new Error(response.data.message);
         return response.data;
     } catch (error: any) {
@@ -58,7 +52,7 @@ export async function logout(): Promise<LogoutResponseType | null> {
 
 export async function checkMe(): Promise<CheckMeResponseType> {
     try {
-        const response = await api.get("/check-me");
+        const response = await api.get("/auth/check-me");
         if (response.status === 400) throw new Error(response.data.message);
         return response.data;
     } catch (error: any) {
@@ -70,7 +64,7 @@ export async function checkMe(): Promise<CheckMeResponseType> {
 // refresh token
 export async function refreshToken(): Promise<RefreshResponseType> {
     try {
-        const response = await api.get("/refresh-token");
+        const response = await api.get("/auth/refresh-token");
         if (response.status === 400) throw new Error(response.data.message);
         return response.data;
     } catch (error: any) {

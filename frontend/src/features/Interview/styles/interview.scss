@@ -47,6 +47,42 @@
   .interview-content {
     min-width: 0;
   }
+
+  // Full-page loading / not-found state while the report is being fetched
+  // (shown when the report is opened from the dashboard, not after generation).
+  .interview-loading {
+    position: relative;
+    z-index: 1;
+    width: min(1400px, 100%);
+    margin: 0 auto;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: rgba(245, 245, 245, 0.7);
+
+    .loader {
+      color: #7ed957;
+      animation: spin 1s linear infinite;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes interview-orb {

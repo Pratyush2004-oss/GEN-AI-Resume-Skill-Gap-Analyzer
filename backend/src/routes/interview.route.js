@@ -24,7 +24,7 @@ router.get('/reports', isAuth, getAllInterviewReportsController);
  * @params id
  * @access private
  */
-router.get('report/:id', isAuth, getSingleInterviewReportController);
+router.get('/report/:id', isAuth, getSingleInterviewReportController);
 
 /**
  * @route DELETE /api/interview/:id
@@ -32,6 +32,6 @@ router.get('report/:id', isAuth, getSingleInterviewReportController);
  * @params id
  * @access private
  */
-router.delete('report/:id', isAuth, deleteInterviewReport);
+router.delete('/report/:id', isAuth, deleteInterviewReport);
 
 export default router;

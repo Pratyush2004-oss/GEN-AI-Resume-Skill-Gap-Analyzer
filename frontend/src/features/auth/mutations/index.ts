@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { login, logout, register, setAccesstoken } from "../services/auth.api";
+import { login, logout, register } from "../services/auth.api";
+import { setAccessToken } from "../../../services/api";
 import type { AuthResponseType } from "../types/auth.types";
 import { useAuth } from "../hook/useAuth";
 
@@ -35,8 +36,9 @@ export const useLoginMutation = () => {
             // set the auth context
             setUser(data.user);
 
-            // Store the access token in axios memory so protected calls include it.
-            setAccesstoken(data.accessToken);
+            // Store the access token on the shared axios instance so every
+            // protected call (auth, interview, ...) includes it automatically.
+            setAccessToken(data.accessToken);
 
             // Cache the current user so the UI can update immediately.
             queryClient.setQueryData(authSessionKey, data.user);
@@ -61,8 +63,9 @@ export const useSignupMutation = () => {
         onSuccess: (data: AuthResponseType) => {
             // set the auth context
             setUser(data.user);
-            // Store the access token in axios memory so protected calls include it.
-            setAccesstoken(data.accessToken);
+            // Store the access token on the shared axios instance so every
+            // protected call (auth, interview, ...) includes it automatically.
+            setAccessToken(data.accessToken);
 
             // Cache the current user so the UI can update immediately.
             queryClient.setQueryData(authSessionKey, data.user);
@@ -86,7 +89,7 @@ export const useLogoutMutation = () => {
         },
         onSuccess: () => {
             // Remove the access token so later requests no longer authenticate.
-            setAccesstoken(null);
+            setAccessToken(null);
 
             // Clear the cached session user.
             queryClient.setQueryData(authSessionKey, null);
