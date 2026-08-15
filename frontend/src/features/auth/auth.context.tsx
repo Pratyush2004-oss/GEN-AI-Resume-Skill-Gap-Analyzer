@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     },
     retry: false, // if refresh fails, treat the user as logged out
     refetchOnWindowFocus: false,
-    staleTime: 60 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,
   });
 
   const setUserValue = useCallback(

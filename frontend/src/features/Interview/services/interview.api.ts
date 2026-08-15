@@ -108,3 +108,85 @@ export async function deleteInterviewReport(id: string): Promise<string | null> 
         return null;
     }
 }
+
+
+/**
+ * @ResumePDFDownload
+ * @description the downloaded resume PDF: the raw bytes plus the exact
+ *              filename the backend attached via Content-Disposition (when
+ *              the header is exposed).
+ */
+export type ResumePDFDownload = {
+    blob: Blob;
+    filename?: string;
+};
+
+/**
+ * Extracts the filename from a Content-Disposition header.
+ * Handles both the plain form (`filename="resume-foo.pdf"`) and the
+ * RFC 5987 encoded form (`filename*=UTF-8''resume%20foo.pdf`).
+ */
+function getFilenameFromContentDisposition(header: string | undefined): string | undefined {
+    if (!header) return undefined;
+
+    // RFC 5987 encoded form — decode the percent-encoded value first.
+    const encoded = /filename\*=(?:UTF-8'')?([^;]+)/i.exec(header);
+    if (encoded?.[1]) {
+        try {
+            const decoded = decodeURIComponent(encoded[1].replace(/^"|"$/g, ""));
+            if (decoded) return decoded;
+        } catch {
+            // Malformed percent-encoding — fall through to the plain form.
+        }
+    }
+
+    // Plain form: filename="resume-foo.pdf" or filename=resume-foo.pdf
+    const plain = /filename="?([^";]+)"?/i.exec(header);
+    return plain?.[1] || undefined;
+}
+
+/**
+ * @generateResumePDF
+ * @description generate a tailored resume PDF for an interview report
+ * @param {interviewReportId}
+ * @returns {ResumePDFDownload | null} the PDF blob plus the backend's
+ *          filename (or null on failure)
+ */
+export async function generateResumePDF(id: string): Promise<ResumePDFDownload | null> {
+    try {
+        // 1. GET /interview/resume/pdf/:id - protected by isAuth. The backend
+        //    streams the PDF as a binary attachment, so request a Blob instead
+        //    of letting axios try to parse the body as JSON.
+        const response = await api.get(`/interview/resume/pdf/${id}`, {
+            responseType: "blob"
+        });
+        if (response.status === 400) throw new Error(response.data.message);
+        // 2. The backend returns the raw PDF bytes as a Blob, and names the
+        //    file via the Content-Disposition header. Return both so the
+        //    caller can save it under the exact name the server sent.
+        return {
+            blob: response.data,
+            filename: getFilenameFromContentDisposition(response.headers["content-disposition"])
+        };
+    } catch (error: any) {
+        // With responseType: "blob", error bodies are Blobs too, so read the
+        // JSON message out of the blob before toasting it.
+        if (error instanceof AxiosError && error.response?.data instanceof Blob) {
+            let message = "Failed to generate resume PDF";
+            try {
+                const parsed = JSON.parse(await error.response.data.text());
+                if (parsed?.message) message = parsed.message;
+            } catch {
+                // Error body wasn't JSON (e.g. a proxy error page) — fall back
+                // to the generic message above.
+            }
+            toast.error(message);
+        } else if (error instanceof AxiosError) {
+            toast.error(error.response?.data.message);
+        } else {
+            toast.error(error.message);
+        }
+        return null;
+    }
+
+}

@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { deleteInterviewReport, generateInterviewReport, getSingleInterviewReport } from "../services/interview.api";
+import { deleteInterviewReport, generateInterviewReport, generateResumePDF, getSingleInterviewReport, type ResumePDFDownload } from "../services/interview.api";
 import type { GenerateInterviewReportType, InterviewReportInputType, REPORTTYPE } from "../types";
 
 // This query key MUST be identical to the one used by the report list query
@@ -23,7 +23,7 @@ const SingleInterViewReportKey = (reportId: string) => ["interview", "report", r
 // useMutation) internally, so they MUST be named with the `use` prefix and be
 // called from a component / custom hook. A bare name like
 // `generateInterviewReportMutation` breaks the rules of hooks.
-export const useGenerateInterviewReportMutation = () => {
+export const useGenerateInterviewReportMutation = (): UseMutationResult<GenerateInterviewReportType, Error, InterviewReportInputType> => {
     // 1. Grab the QueryClient so we can invalidate the list cache afterwards.
     const queryClient = useQueryClient();
 
@@ -62,7 +62,7 @@ export const useGenerateInterviewReportMutation = () => {
     })
 }
 
-export const useDeleteInterviewReportMutation = () => {
+export const useDeleteInterviewReportMutation = (): UseMutationResult<string, Error, string> => {
     const queryClient = useQueryClient();
 
     return useMutation<string, Error, string>({
@@ -102,7 +102,7 @@ export const useDeleteInterviewReportMutation = () => {
  *     initialData is undefined and the query fetches the details from
  *     GET /interview/report/:id, then the page renders them.
  */
-export const useGetSingleInterviewReportQuery = (reportId: string) => {
+export const useGetSingleInterviewReportQuery = (reportId: string): UseQueryResult<REPORTTYPE | null, Error> => {
     const queryClient = useQueryClient();
 
     // Read the report the generate mutation cached, if any. The id in the
@@ -122,5 +122,72 @@ export const useGetSingleInterviewReportQuery = (reportId: string) => {
         retry: false,
         refetchOnWindowFocus: false,
         staleTime: 60 * 60 * 1000
+    });
+}
+
+type GenerateResumePDFVariables = {
+    id: string;
+    title: string;
+};
+
+// Cache key for downloaded resume PDFs. The blob is stored under the report
+// id so downloading the same resume again serves the cached copy instead of
+// hitting GET /interview/resume/pdf/:id a second time.
+const ResumePDFKey = (reportId: string) => ["interview", "resumePDF", reportId] as const;
+
+/**
+ * @useGenerateResumePDFMutation
+ * @description generate a tailored resume PDF for a report and download it
+ *
+ * Fires GET /interview/resume/pdf/:id, receives the PDF as a Blob and
+ * triggers a browser download. Two things make repeat downloads cheap:
+ *
+ *  - The downloaded PDF is stashed in the React Query cache under the
+ *    report id, so clicking Download again for the same report reuses the
+ *    cached blob instead of making another network request.
+ *  - The file is saved under the EXACT filename the backend sends in the
+ *    Content-Disposition header (the `title` variable is only a fallback
+ *    if that header isn't exposed).
+ */
+export const useGenerateResumePDFMutation = (): UseMutationResult<ResumePDFDownload, Error, GenerateResumePDFVariables> => {
+    const queryClient = useQueryClient();
+
+    return useMutation<ResumePDFDownload, Error, GenerateResumePDFVariables>({
+        mutationFn: async ({ id }: GenerateResumePDFVariables) => {
+            // Serve a previously-downloaded copy from the cache — repeat
+            // downloads of the same resume must not re-hit the backend.
+            const cached = queryClient.getQueryData<ResumePDFDownload>(ResumePDFKey(id));
+            if (cached) return cached;
+
+            // Same pattern as the other mutations: the API helper returns null
+            // on failure (and toasts the error), so throw to surface isError.
+            const response = await generateResumePDF(id);
+            if (!response) {
+                throw new Error("Failed to generate resume PDF");
+            }
+            return response;
+        },
+        onSuccess: (pdf: ResumePDFDownload, { id, title }: GenerateResumePDFVariables) => {
+            // Cache the blob so the next download of the same resume is free.
+            queryClient.setQueryData(ResumePDFKey(id), pdf);
+
+            // Trigger a browser download of the PDF blob.
+            const url = URL.createObjectURL(pdf.blob);
+            const link = document.createElement("a");
+            // Prefer the exact filename the backend sent; only fall back to a
+            // sanitized version of the report title when the header is missing.
+            const safeTitle = title
+                .replace(/[^a-z0-9]+/gi, "-")
+                .replace(/^-+|-+$/g, "")
+                .toLowerCase();
+            link.href = url;
+            link.download = pdf.filename || `resume-${safeTitle}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            toast.success("Resume PDF downloaded");
+        }
     });
 }

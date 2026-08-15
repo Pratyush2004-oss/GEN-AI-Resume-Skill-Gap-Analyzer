@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router";
-import { Loader } from "lucide-react";
+import { Download, Loader } from "lucide-react";
 import InterviewSidebar from "../components/InterviewSidebar";
 import TechnicalQuestions from "../components/TechnicalQuestions";
 import BehavioralQuestions from "../components/BehavioralQuestions";
@@ -8,7 +8,7 @@ import PreparationPlan from "../components/PreparationPlan";
 import JobDescription from "../components/JobDescription";
 import SkillGaps from "../components/SkillGaps";
 import usePersistentState from "../hooks/usePersistentState";
-import { useGetSingleInterviewReportQuery } from "../mutations";
+import { useGenerateResumePDFMutation, useGetSingleInterviewReportQuery } from "../mutations";
 import type { InterviewSection } from "../types";
 import "../styles/interview.scss";
 
@@ -21,6 +21,9 @@ const Interview = () => {
     // mutations/index.ts) and is fetched by id only when the report is
     // opened from the dashboard.
     const { data: report, isLoading } = useGetSingleInterviewReportQuery(interviewId);
+
+    // Generates the tailored resume PDF for this report and downloads it.
+    const resumePDFMutation = useGenerateResumePDFMutation();
 
     // Editable state, persisted to localStorage per interview.
     const [notes, setNotes] = usePersistentState<Record<string, string>>(
@@ -96,9 +99,35 @@ const Interview = () => {
         }
     };
 
+    const handleDownloadResume = () => {
+        resumePDFMutation.mutate({ id: report._id, title: report.title });
+    };
+
     return (
         <main className="interview">
             <div className="interview-inner">
+                {/* Report header — the AI-generated title of the role, plus the
+                    action to download a tailored resume PDF for this report. */}
+                <header className="interview-header">
+                    <div className="interview-header__text">
+                        <span className="interview-header__eyebrow">Interview Report</span>
+                        <h1 className="interview-header__title">{report.title}</h1>
+                    </div>
+                    <button
+                        type="button"
+                        className="interview-header__download"
+                        onClick={handleDownloadResume}
+                        disabled={resumePDFMutation.isPending}
+                    >
+                        {resumePDFMutation.isPending ? (
+                            <Loader className="interview-header__spinner" size={16} />
+                        ) : (
+                            <Download size={16} />
+                        )}
+                        {resumePDFMutation.isPending ? "Generating…" : "Download Resume PDF"}
+                    </button>
+                </header>
+
                 <InterviewSidebar activeSection={activeSection} onSelect={setActiveSection} />
 
                 <section className="interview-content" key={activeSection}>
