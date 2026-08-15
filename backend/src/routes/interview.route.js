@@ -1,5 +1,5 @@
 import express from "express";
-import { generateInterviewReportController } from "../controllers/interview.controller.js";
+import { deleteInterviewReport, generateInterviewReportController, getAllInterviewReportsController, getSingleInterviewReportController } from "../controllers/interview.controller.js";
 import { isAuth } from "../middleware/auth.middleware.js";
 import upload from "../middleware/file.middleware.js";
 const router = express.Router();
@@ -9,6 +9,29 @@ const router = express.Router();
  * @description generate new interview report on the basis of user self description, resume pdf and job description
  * @access private
  */
-router.post('/', upload.single("resume"), generateInterviewReportController);
+router.post('/generate', isAuth, upload.single("resume"), generateInterviewReportController);
+
+/**
+ * @route GET /api/interview
+ * @description get all interview reports of a user
+ * @access private
+ */
+router.get('/reports', isAuth, getAllInterviewReportsController);
+
+/**
+ * @route GET /api/interview/:id
+ * @description get a single interview report of a user
+ * @params id
+ * @access private
+ */
+router.get('report/:id', isAuth, getSingleInterviewReportController);
+
+/**
+ * @route DELETE /api/interview/:id
+ * @description delete a single interview report of a user
+ * @params id
+ * @access private
+ */
+router.delete('report/:id', isAuth, deleteInterviewReport);
 
 export default router;
