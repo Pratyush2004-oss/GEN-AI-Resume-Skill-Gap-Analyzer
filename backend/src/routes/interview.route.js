@@ -1,5 +1,5 @@
 import express from "express";
-import { deleteInterviewReport, generateInterviewReportController, getAllInterviewReportsController, getSingleInterviewReportController } from "../controllers/interview.controller.js";
+import { deleteInterviewReport, generateInterviewReportController, generateResumePDFController, getAllInterviewReportsController, getSingleInterviewReportController } from "../controllers/interview.controller.js";
 import { isAuth } from "../middleware/auth.middleware.js";
 import upload from "../middleware/file.middleware.js";
 const router = express.Router();
@@ -34,4 +34,11 @@ router.get('/report/:id', isAuth, getSingleInterviewReportController);
  */
 router.delete('/report/:id', isAuth, deleteInterviewReport);
 
+/**
+ * @route POST /api/interview/resume/pdf/:id
+ * @description Generate tailored resume according to the job description
+ * @params id
+ * @access private
+ */
+router.get('/resume/pdf/:id', isAuth, generateResumePDFController);
 export default router;

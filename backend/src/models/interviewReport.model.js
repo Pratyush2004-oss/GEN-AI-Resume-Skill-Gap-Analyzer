@@ -101,6 +101,9 @@ const InterviewReportSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true
+    },
+    resumeContentHTML: {
+        type: String
     }
 }, {
     timestamps: true

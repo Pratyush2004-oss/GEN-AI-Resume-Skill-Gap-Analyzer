@@ -18,6 +18,9 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    // Expose Content-Disposition so the browser can read the filename the
+    // backend attaches to the resume PDF download.
+    exposedHeaders: ["Content-Disposition"],
   })
 );
 

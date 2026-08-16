@@ -1,6 +1,6 @@
 import expressAsyncHandler from "express-async-handler";
 import { PDFParse } from "pdf-parse";
-import { generateInterviewReport, interviewReportSchema } from "../services/ai.js";
+import { generateInterviewReport, generatePDFFormatHTML, generateResumePdf, interviewReportSchema } from "../services/ai.js";
 import InterviewReportModel from "../models/interviewReport.model.js";
 
 
@@ -92,6 +92,42 @@ export const deleteInterviewReport = expressAsyncHandler(async (req, res, next) 
         res.status(200).json({ message: "Interview report deleted successfully" });
     } catch (error) {
         console.log("Error in delete Interview Controller");
+        next(error);
+    }
+})
+
+/**
+ * @generateResumePDFController POST /api/interview/resume
+ * @description Generate tailored resume according to the job description
+ * @access private
+ * @param interviewId
+ * @return {pdf}
+ */
+export const generateResumePDFController = expressAsyncHandler(async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+        const interviewId = req.params.id;
+        const interviewReport = await InterviewReportModel.findOne({ user: userId, _id: interviewId }).select("resume selfDescription jobDescription title");
+        if (!interviewReport) {
+            return res.status(404).json({ message: "Interview report not found" });
+        }
+        let pdfBuffer = null;
+        if (interviewReport.resumeContentHTML) {
+            pdfBuffer = await generatePDFFormatHTML(interviewReport.resumeContentHTML);
+        }
+        else {
+            const result = await generateResumePdf({ resume: interviewReport.resume, selfDescription: interviewReport.selfDescription, jobDescription: interviewReport.jobDescription });
+            // save the resume in the database also
+            await InterviewReportModel.findOneAndUpdate({ user: userId, _id: interviewId }, { resumeContentHTML: result.html });
+            pdfBuffer = result.pdfBuffer;
+        }
+        if (!pdfBuffer) return res.status(502).json({ message: "AI returned an invalid resume. Please try again." });
+        res.status(200).set({
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `attachment; filename=resume-${interviewReport.title}-${interviewReport._id}-${Date.now()}.pdf`
+        }).send(pdfBuffer);
+    } catch (error) {
+        console.log("Error in generateResumePDFController: " + error);
         next(error);
     }
 })
