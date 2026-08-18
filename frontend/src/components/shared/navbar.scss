@@ -56,6 +56,50 @@
     gap: 0.75rem;
   }
 
+  .nav-btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: 1.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+
+    &:focus-visible {
+      outline: 2px solid #7ed957;
+      outline-offset: 2px;
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    &--ghost {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: rgba(245, 245, 245, 0.9);
+
+      &:hover:not(:disabled) {
+        border-color: rgba(80, 135, 64, 0.6);
+        color: #7ed957;
+        background: rgba(80, 135, 64, 0.12);
+      }
+    }
+
+    &--primary {
+      background: linear-gradient(135deg, #6aa84f 0%, #508740 100%);
+      border: none;
+      color: whitesmoke;
+      box-shadow: 0 4px 16px rgba(80, 135, 64, 0.35);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+        box-shadow: 0 10px 26px rgba(80, 135, 64, 0.5);
+      }
+    }
+  }
+
   .user-menu {
     position: relative;
   }

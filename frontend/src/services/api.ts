@@ -12,7 +12,7 @@ import axios from "axios";
  */
 const api = axios.create({
     // Backend is served from the same origin in production; in dev it runs on localhost:3000.
-    baseURL: import.meta.env.PROD ? "/api" : "http://localhost:3000/api",
+    baseURL: "/api",
     // Send cookies (the httpOnly refresh token) along with requests so the
     // backend can validate / rotate the refresh token.
     withCredentials: true,

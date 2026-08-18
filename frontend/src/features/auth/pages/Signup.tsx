@@ -56,7 +56,8 @@ const Signup = () => {
                 <Loader className='loader' />
                 <span>Loading...</span>
               </span>
-            ) : "Login"}</button>        </form>
+            ) : "Signup"}</button>
+        </form>
         <p className='navigate-link'>Already have an account? <span onClick={() => navigate('/login')}>Login</span></p>
       </div>
     </main>
