@@ -4,7 +4,9 @@ import { connectDB } from "./src/config/db.js";
 
 const PORT = process.env.PORT;
 
+// connecting the database
 connectDB();
+// connecting to the backend port
 app.listen(process.env.PORT, () => {
     console.log(`Server running on port ${process.env.PORT}`);
 });
