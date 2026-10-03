@@ -1,5 +1,5 @@
 import { Eye, EyeClosed, Loader } from 'lucide-react';
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import "../auth.form.scss";
 import { useSignupMutation } from '../mutations';
@@ -17,9 +17,10 @@ const Signup = () => {
 
     // Call the mutation instance created at component scope.
     signupMutation.mutate({ username, email, password }, {
-      onSuccess: () => {
-        // redirect to home page if login is successful.
-        navigate('/');
+      onSuccess: (data) => {
+        navigate('/verify-otp', {
+          state: { verificationId: data.verificationId, email },
+        });
       },
       onSettled: () => {
         // reset the form fields

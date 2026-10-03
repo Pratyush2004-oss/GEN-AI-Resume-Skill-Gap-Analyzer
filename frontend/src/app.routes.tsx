@@ -1,6 +1,7 @@
 import { createBrowserRouter, Outlet } from "react-router";
 import Login from "./features/auth/pages/Login";
 import Signup from "./features/auth/pages/Signup";
+import VerifyOtp from "./features/auth/pages/VerifyOtp";
 import NotFoundPage from "./features/not-found";
 import Home from "./features/Interview/Pages/Home";
 import Dashboard from "./features/Interview/Pages/Dashboard";
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
             {
                 path: "/signup",
                 element: <Signup />
+            },
+            {
+                path: "/verify-otp",
+                element: <VerifyOtp />
             },
             {
                 path: "*",

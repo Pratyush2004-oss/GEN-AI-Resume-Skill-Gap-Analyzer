@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import puppeteer from "puppeteer";
+import fs from "fs";
 
 // ===========================================================================
 // Gemini AI client
@@ -264,7 +265,31 @@ async function getBrowser() {
 
     // If the browser crashed or was closed, launch a fresh one.
     if (!browserIsUsable) {
-        sharedBrowser = await puppeteer.launch({ headless: true });
+        const configuredExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+        const executableCandidates = [
+            configuredExecutablePath,
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
+        ].filter(Boolean);
+        const executablePath = executableCandidates.find((candidate) => fs.existsSync(candidate))
+            || puppeteer.executablePath();
+
+        if (!fs.existsSync(executablePath)) {
+            throw new Error(
+                `Chromium executable not found at ${executablePath}. ` +
+                "Install Chromium in the production image or set PUPPETEER_EXECUTABLE_PATH.",
+            );
+        }
+
+        sharedBrowser = await puppeteer.launch({
+            headless: true,
+            executablePath,
+            args: process.env.NODE_ENV === "production"
+                ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+                : [],
+        });
     }
     return sharedBrowser;
 }

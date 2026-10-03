@@ -25,6 +25,14 @@ const userSchema = new mongoose.Schema(
       default: null, // Stores the current refresh token for rotation/logout.
       select: false,
     },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

@@ -10,6 +10,16 @@ export type AuthResponseType = {
     accessToken: string
 }
 
+export type SignupResponseType = {
+    user: UserType,
+    message: string,
+    verificationId: string,
+}
+
+export type MessageResponseType = {
+    message: string,
+}
+
 export type RefreshResponseType = {
     accessToken: string
 }

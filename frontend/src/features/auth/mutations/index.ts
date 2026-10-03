@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { login, logout, register } from "../services/auth.api";
+import { login, logout, register, resendOtp, verifyEmailOtp } from "../services/auth.api";
 import { setAccessToken } from "../../../services/api";
-import type { AuthResponseType } from "../types/auth.types";
+import type { AuthResponseType, MessageResponseType, SignupResponseType } from "../types/auth.types";
 import { useAuth } from "../hook/useAuth";
 
 type LoginVariables = {
@@ -50,11 +50,26 @@ export const useLoginMutation = () => {
 };
 
 export const useSignupMutation = () => {
-    const queryClient = useQueryClient();
-    const [, setUser] = useAuth();
-    return useMutation<AuthResponseType, Error, SignupVariables>({
+    return useMutation<SignupResponseType, Error, SignupVariables>({
         mutationFn: async ({ username, email, password }: SignupVariables) => {
             const response = await register(username, email, password);
+            if (!response) {
+                throw new Error("Signup failed");
+            }
+            return response;
+        },
+        onSuccess: (data: SignupResponseType) => {
+            toast.success(data.message);
+        },
+    });
+};
+
+export const useVerifyOtpMutation = () => {
+     const queryClient = useQueryClient();
+    const [, setUser] = useAuth();
+    return useMutation<AuthResponseType, Error, any>({
+        mutationFn: async ({ verificationId, email, otp }: any) => {
+            const response = await verifyEmailOtp(verificationId, email, otp);
             if (!response) {
                 throw new Error("Signup failed");
             }
@@ -63,18 +78,33 @@ export const useSignupMutation = () => {
         onSuccess: (data: AuthResponseType) => {
             // set the auth context
             setUser(data.user);
+
             // Store the access token on the shared axios instance so every
-            // protected call (auth, interview, ...) includes it automatically.
             setAccessToken(data.accessToken);
 
             // Cache the current user so the UI can update immediately.
             queryClient.setQueryData(authSessionKey, data.user);
 
-            // toast the success message 
+            // toast the success message
             toast.success(data.message);
         },
     });
-};
+}
+
+export const useResendOtpMutation = () => {
+    return useMutation<MessageResponseType, Error, { verificationId: string; email: string }>({
+        mutationFn: async ({ verificationId, email }: any) => {
+            const response = await resendOtp(verificationId, email);
+            if (!response) {
+                throw new Error("Signup failed");
+            }
+            return response;
+        },
+        onSuccess: (data: MessageResponseType) => {
+            toast.success(data.message);
+        },
+    })
+}
 
 export const useLogoutMutation = () => {
     const queryClient = useQueryClient();

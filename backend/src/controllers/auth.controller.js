@@ -2,6 +2,17 @@ import expressAsyncHandler from "express-async-handler";
 import UserModel from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import {
+    createVerificationId,
+    deleteVerification,
+    enforceOtpRateLimits,
+    ensureResendCooldown,
+    generateOtp,
+    getStoredOtpContext,
+    storeOtp,
+    verifyStoredOtp,
+} from "../services/otp.service.js";
+import { sendEmailOtp } from "../services/email.service.js";
 
 /**
  * @generateAccessToken
@@ -58,6 +69,15 @@ const clearRefreshCookie = (res) => {
     });
 }
 
+const issueTokens = async (user, res) => {
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+    setRefreshCookie(res, refreshToken);
+    return accessToken;
+};
+
 /**
  * @signup POST /api/auth/signup
  * @description signup a new user
@@ -65,50 +85,109 @@ const clearRefreshCookie = (res) => {
  */
 const signup = expressAsyncHandler(async (req, res, next) => {
     try {
-        // check if req.body is not valid
         if (!req.body) {
-            res.status(400);
             return res.status(400).json({ message: "Invalid request body" });
         }
 
-        // get inputs 
         const { username, email, password } = req.body;
-        if (!username || !email || !password) {
-            res.status(400);
+        const normalizedEmail = String(email || "").trim().toLowerCase();
+        if (!username || !normalizedEmail || !password) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        // check if user already exists 
-        const isUserAlreadyExists = await UserModel.findOne({ $or: [{ username }, { email }] }).select("email");
+        const isUserAlreadyExists = await UserModel.findOne({
+            $or: [{ username }, { email: normalizedEmail }],
+        }).select("_id email");
+
         if (isUserAlreadyExists) {
-            res.status(400);
             return res.status(400).json({ message: "User already exists" });
         }
 
-        // hash the password
+        await enforceOtpRateLimits({ channel: "email", destination: normalizedEmail, ip: req.ip });
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
-        // create a new user
         const user = await UserModel.create({
             username,
-            email,
+            email: normalizedEmail,
             password: hashedPassword,
         });
 
-        // create token 
-        const accessToken = generateAccessToken(user._id);
-        const refreshToken = generateRefreshToken(user._id);
+        const verificationId = createVerificationId();
+        const emailOtp = generateOtp();
 
-        user.refreshToken = refreshToken;
+        try {
+            await Promise.all([
+                storeOtp({
+                    verificationId,
+                    channel: "email",
+                    destination: normalizedEmail,
+                    userId: user._id,
+                    otp: emailOtp,
+                }),
+                sendEmailOtp({ email: normalizedEmail, otp: emailOtp }),
+            ]);
+        } catch (error) {
+            await deleteVerification(verificationId);
+            await UserModel.deleteOne({ _id: user._id });
+            throw error;
+        }
+
+        res.status(201).json({
+            message: "Verification code sent to your email",
+            verificationId,
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+            },
+        });
+    } catch (error) {
+        console.log("Error in signup controller: ", error);
+        next(error);
+    }
+});
+
+/**
+ * @verifyEmailOtp POST /api/auth/verify-email-otp
+ * @description verify email otp
+ * @access public
+ */
+const verifyEmailOtp = expressAsyncHandler(async (req, res, next) => {
+    try {
+        const { verificationId, email, otp } = req.body || {};
+        if (!verificationId || !otp || !email) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const result = await verifyStoredOtp({
+            verificationId,
+            channel: "email",
+            destination: String(email).trim().toLowerCase(),
+            otp: String(otp).trim(),
+        });
+        if (!result.valid) {
+            const messages = {
+                expired: "OTP expired. Please request a new code.",
+                attempts_exceeded: "Too many invalid attempts. Please request a new code.",
+                invalid: "Invalid OTP",
+            };
+            return res.status(400).json({ message: messages[result.reason] || "Invalid OTP" });
+        }
+
+        const user = await UserModel.findById(result.userId);
+        if (!user) {
+            return res.status(404).json({ message: "User does not exist" });
+        }
+
+        user.emailVerified = true;
+        user.isVerified = true;
         await user.save({ validateBeforeSave: false });
 
-        setRefreshCookie(res, refreshToken);
-
-        // send response
-        res.status(201);
-        res.json({
-            message: "User created successfully",
+        const accessToken = await issueTokens(user, res);
+        await deleteVerification(verificationId);
+        res.status(200).json({
+            message: "User verified successfully",
             user: {
                 _id: user._id,
                 username: user.username,
@@ -116,9 +195,49 @@ const signup = expressAsyncHandler(async (req, res, next) => {
             },
             accessToken,
         });
-
     } catch (error) {
-        console.log("Error in signup controller: ", error);
+        console.log("Error in verify email OTP controller: ", error);
+        next(error);
+    }
+});
+
+/**
+ * @resendOtp POST /api/auth/resend-otp
+ * @description resend otp
+ * @access public
+ */
+const resendOtp = expressAsyncHandler(async (req, res, next) => {
+    try {
+        const { verificationId, email } = req.body || {};
+        if (!verificationId || !email) {
+            return res.status(400).json({ message: "verificationId and email are required" });
+        }
+
+        const normalizedDestination = String(email).trim().toLowerCase();
+        await ensureResendCooldown({ channel: "email", destination: normalizedDestination });
+        const context = await getStoredOtpContext({
+            verificationId,
+            channel: "email",
+            destination: normalizedDestination,
+        });
+        if (!context) {
+            return res.status(400).json({ message: "Verification session expired. Please sign up again." });
+        }
+
+        const user = await UserModel.findById(context.userId);
+        if (!user) return res.status(404).json({ message: "User does not exist" });
+        const otp = generateOtp();
+        await storeOtp({
+            verificationId,
+            channel: "email",
+            destination: normalizedDestination,
+            userId: user._id,
+            otp,
+        });
+        await sendEmailOtp({ email: normalizedDestination, otp });
+        res.status(200).json({ message: "Verification code sent" });
+    } catch (error) {
+        console.log("Error in resend OTP controller: ", error);
         next(error);
     }
 });
@@ -152,6 +271,12 @@ const login = expressAsyncHandler(async (req, res, next) => {
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
         if (!isPasswordCorrect) {
             return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        if (!user.isVerified) {
+            return res.status(403).json({
+                message: "Verify your email before logging in",
+            });
         }
 
         // create tokens
@@ -262,4 +387,12 @@ const logout = expressAsyncHandler(async (req, res, next) => {
     }
 });
 
-export { signup, login, checkMe, refreshToken, logout };
+export {
+    signup,
+    login,
+    checkMe,
+    refreshToken,
+    logout,
+    verifyEmailOtp,
+    resendOtp,
+};

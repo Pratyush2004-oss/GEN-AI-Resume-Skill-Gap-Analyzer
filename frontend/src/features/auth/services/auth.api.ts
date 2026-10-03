@@ -1,16 +1,40 @@
 import { AxiosError } from "axios";
 import { toast } from "react-toastify";
-import type { AuthResponseType, CheckMeResponseType, LogoutResponseType, RefreshResponseType } from "../types/auth.types";
+import type { AuthResponseType, CheckMeResponseType, LogoutResponseType, MessageResponseType, RefreshResponseType, SignupResponseType } from "../types/auth.types";
 import api from "../../../services/api";
 
 // NOTE: The access token header is managed centrally in src/services/api.ts
 // via setAccessToken(). Never create a separate axios instance here - if you
 // do, the token set at login time won't be attached to these requests.
 
-export async function register(username: string, email: string, password: string): Promise<AuthResponseType | null> {
+export async function register(username: string, email: string, password: string): Promise<SignupResponseType | null> {
     try {
         const response = await api.post("/auth/signup", { username, email, password });
         if (response.status === 400) throw new Error(response.data);
+        return response.data;
+    } catch (error: any) {
+        if (error instanceof AxiosError) toast.error(error.response?.data.message);
+        else toast.error(error.message);
+        return null;
+    }
+
+}
+
+export async function verifyEmailOtp(verificationId: string, email: string, otp: string): Promise<AuthResponseType | null> {
+    try {
+        const response = await api.post("/auth/verify-email-otp", { verificationId, email, otp });
+        return response.data;
+    } catch (error:any) {
+        if (error instanceof AxiosError) toast.error(error.response?.data.message);
+        else toast.error(error.message);
+        return null;
+    }
+}
+
+// resend otp
+export async function resendOtp(verificationId: string, email: string): Promise<MessageResponseType | null> {
+    try {
+        const response = await api.post("/auth/resend-otp", { verificationId, email });
         return response.data;
     } catch (error: any) {
         if (error instanceof AxiosError) toast.error(error.response?.data.message);
