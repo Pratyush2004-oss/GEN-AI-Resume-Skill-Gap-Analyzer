@@ -46,6 +46,8 @@ const VerifyOtp = () => {
         verifyOtpMutation.mutate({ verificationId, email, otp: emailOtp }, {
             onSuccess: () => {
                 setEmailVerified(true);
+                // redirect to home if verification is successful.
+                navigate('/');
             }
         })
     };
